@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace BotCensus
 {
-    [BepInPlugin(PluginId, "Bot Census", "1.4.0")]
+    [BepInPlugin(PluginId, "Bot Census", "1.5.0")]
     [BepInDependency("com.morebotsapi.tacticaltoaster", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.fika.core", BepInDependency.DependencyFlags.SoftDependency)]
     public class BotCensusPlugin : BaseUnityPlugin
@@ -381,9 +381,11 @@ namespace BotCensus
 
         // A full-screen menu (Tab inventory, map, trader, settings, death…) becomes the current screen and
         // hides the game's own battle HUD. Key off that same signal so the overlay isn't left sitting on top.
+        // CurrentScreenSingletonClass was retired in the client shipped with SPT 4.x; EftScreenManager is
+        // its replacement, carrying the same CheckCurrentScreen(EEftScreenType) call.
         static bool MenuCoveringHud()
         {
-            var screens = CurrentScreenSingletonClass.Instance;
+            var screens = EftScreenManager.Instance;
             return screens == null || !screens.CheckCurrentScreen(EEftScreenType.BattleUI);
         }
     }

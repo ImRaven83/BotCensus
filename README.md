@@ -39,7 +39,8 @@ screen, so it settles alongside the rest of the HUD instead of popping over it.
 
 ## Install
 
-Put the `BotCensus` folder in `BepInEx/plugins` and launch. Nothing to configure to get going.
+Built and tested against SPT 4.1.3 (EFT client 0.16.9.5.40743). Put the `BotCensus` folder in
+`BepInEx/plugins` and launch. Nothing to configure to get going.
 **MoreBotsAPI** (custom-faction names) and **Fika** (co-op) are optional; each is used automatically
 when it's installed and ignored when it isn't.
 
