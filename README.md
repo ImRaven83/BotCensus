@@ -118,7 +118,8 @@ assemblies the first time it's built. The parts most likely to need attention:
 
 ## Build
 
-`dotnet build -c Release`, with the .NET SDK 8+ installed. Path resolution keys off `SptRoot` in the
+`dotnet build -c Release`, with the .NET SDK 8+ installed (`.\package.ps1` builds and zips a release
+into `dist/`; add `-Spt 5` for the 5.0 build). Path resolution keys off `SptRoot` in the
 csproj; by default it walks three folders up to the SPT install, so override that if your checkout lives
 elsewhere. The build drops `BotCensus.dll` into `BepInEx/plugins/BotCensus`.
 

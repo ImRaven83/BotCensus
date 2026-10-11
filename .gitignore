@@ -3,3 +3,6 @@ obj/
 *.user
 # Reference art the row icons are traced from — BSG/faction logos, kept local, not redistributed.
 Icons/source/
+
+# Release archives built by package.ps1
+dist/
