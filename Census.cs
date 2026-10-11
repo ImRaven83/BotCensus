@@ -231,7 +231,9 @@ namespace BotCensus
         // throw rather than a false. Latch it and stay on the local count for the rest of the session: that
         // still sees every bot, it only loses the ability to tell a remote client's AI apart, which beats a
         // frozen panel and a stack trace every few seconds for the whole raid.
+#pragma warning disable CS0649   // only assigned when the build includes Fika
         bool _fikaFailed;
+#pragma warning restore CS0649
 
         bool TryFika()
         {
@@ -295,11 +297,21 @@ namespace BotCensus
             WildSpawnType role = profile.Info.Settings.Role;
             int r = (int)role;
 
-            // (A) Custom factions register WildSpawnType integers above the vanilla ceiling (67).
+#if SPT5
+            // (A0) The 5.0 client's own factions — Black Division, RUAF, Wedge — are vanilla roles there,
+            //      but they belong on the faction rows, not in a vanilla bucket.
+            if (Classifier.NativeFaction(r, out string native, out bool nativeEscort))
+            {
+                Bump(native, nativeEscort);
+                return;
+            }
+#endif
+
+            // (A) Custom factions register WildSpawnType integers above the vanilla ceiling.
             //     Resolve these first so a Savage-side faction bot is never shadowed into another bucket.
             //     A faction registers a role per rank, so keep the boss and his escort apart here rather
             //     than folding both into one tally the way this used to.
-            if (r > 67)
+            if (r > Classifier.VanillaCeiling)
             {
                 Bump(MoreBotsBridge.Label(r), MoreBotsBridge.IsEscort(role));
                 return;
@@ -371,7 +383,7 @@ namespace BotCensus
             foreach (var faction in _factions)
             {
                 FactionTally tally = faction.Value;
-                if (_splitBoss.Value && MoreBotsBridge.FactionHasBoss(faction.Key))
+                if (_splitBoss.Value && FactionHasBoss(faction.Key))
                 {
                     if (tally.Bosses > 0) _rows.Add(new CensusRow(faction.Key, tally.Bosses, true, Icons.ForFactionBoss(faction.Key)));
                     if (tally.Escorts > 0) _rows.Add(new CensusRow(faction.Key + " Guard", tally.Escorts, true, Icons.ForFactionGuard(faction.Key)));
@@ -381,6 +393,14 @@ namespace BotCensus
                     _rows.Add(new CensusRow(faction.Key, tally.Bosses + tally.Escorts, true, Icons.ForFaction(faction.Key)));
                 }
             }
+        }
+
+        static bool FactionHasBoss(string faction)
+        {
+#if SPT5
+            if (Classifier.NativeFactionHasBoss(faction)) return true;
+#endif
+            return MoreBotsBridge.FactionHasBoss(faction);
         }
 
         // Counted off the tallies rather than the rows above it, so a row you've hidden or merged doesn't
@@ -431,7 +451,11 @@ namespace BotCensus
         // hides the game's own battle HUD. Key off that same signal so the overlay isn't left sitting on top.
         static bool MenuCoveringHud()
         {
+#if SPT5
+            var screens = EftScreenManager.Instance;   // what SPT 4.1 remaps as CurrentScreenSingletonClass
+#else
             var screens = CurrentScreenSingletonClass.Instance;
+#endif
             return screens == null || !screens.CheckCurrentScreen(EEftScreenType.BattleUI);
         }
     }

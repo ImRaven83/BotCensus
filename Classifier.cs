@@ -3,11 +3,18 @@ using EFT;
 
 namespace BotCensus
 {
-    // Maps vanilla WildSpawnType values (0-67) to a display bucket. Values a name-substring test
+    // Maps vanilla WildSpawnType values (0-67, or 0-82 on SPT 5.0) to a display bucket. Values a name-substring test
     // would get wrong or miss are pinned by number; the well-behaved boss*/follower* families fall
     // through to the substring test. Verified against EFT's WildSpawnType enum.
     internal static class Classifier
     {
+        // The highest vanilla WildSpawnType. Anything above it was registered by a faction mod.
+#if SPT5
+        public const int VanillaCeiling = 82;
+#else
+        public const int VanillaCeiling = 67;
+#endif
+
         static readonly Dictionary<int, Bucket> Pinned = new Dictionary<int, Bucket>
         {
             // scavs the keyword test misses (10 cursedAssault, 19 assaultGroup) and the
@@ -39,7 +46,51 @@ namespace BotCensus
             // non-combatant / special NPCs (test, gifter, spirits, peacemaker, skier).
             { 18, Bucket.Other }, { 25, Bucket.Other },
             { 48, Bucket.Other }, { 49, Bucket.Other }, { 50, Bucket.Other }, { 53, Bucket.Other },
+#if SPT5
+            // The SPT 5.0 client's own additions past 67 that aren't a faction (those are in Native below).
+            // 71 assaultTutorial is a scav; 75 exUsecFree a rogue; 72 sentry and 74 civilian carry no
+            // keyword and fight for nobody we count. 77/78 bossBullyBlackDiv / followerBullyBlackDiv fall
+            // through to the boss/follower test like the rest of their family.
+            { 71, Bucket.Scav }, { 75, Bucket.Rogue }, { 72, Bucket.Other }, { 74, Bucket.Other },
+#endif
         };
+
+#if SPT5
+        // The SPT 5.0 client ships the factions that SPT 4.1 only had through mods, as ordinary vanilla
+        // roles. They land on the same rows the MoreBotsAPI versions do, under the same names, so the
+        // glyph table and the boss/escort split treat them alike. Read off the 5.0 WildSpawnType enum.
+        static readonly Dictionary<int, (string Faction, bool Escort)> Native = new Dictionary<int, (string, bool)>
+        {
+            // Black Division: blackDivision, pmcBotBlackDiv, pmcBotBlackDivSeason. A flat squad.
+            { 68, ("Black Division", true) }, { 79, ("Black Division", true) }, { 82, ("Black Division", true) },
+
+            // RUAF (ВС РФ): vsRF, vsRFSniper, vsRFFight. A flat squad.
+            { 69, ("RUAF", true) }, { 70, ("RUAF", true) }, { 73, ("RUAF", true) },
+
+            // Wedge leads; bossWedge and his Labs variant, then his Labs escort.
+            { 76, ("Wedge", false) }, { 80, ("Wedge", false) }, { 81, ("Wedge", true) },
+        };
+
+        public static bool NativeFaction(int r, out string faction, out bool escort)
+        {
+            if (Native.TryGetValue(r, out var hit))
+            {
+                faction = hit.Faction;
+                escort = hit.Escort;
+                return true;
+            }
+            faction = null;
+            escort = false;
+            return false;
+        }
+
+        public static bool NativeFactionHasBoss(string faction)
+        {
+            foreach (var entry in Native.Values)
+                if (!entry.Escort && entry.Faction == faction) return true;
+            return false;
+        }
+#endif
 
         public static Bucket Vanilla(WildSpawnType role)
         {

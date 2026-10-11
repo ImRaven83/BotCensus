@@ -25,10 +25,10 @@
     <DefineConstants>$(DefineConstants);FIKA</DefineConstants>
   </PropertyGroup>
 
-  <!-- BepInEx 6 IL2CPP runs plugins on CoreCLR. Output keeps its framework folder so a 5.0 build never
+  <!-- SPT 5.0's BepInEx 6 runs plugins on .NET 10 (CoreCLR). Output keeps its framework folder so a 5.0 build never
        overwrites a 4.1 one. Fika support compiles in only if a Fika.Core.dll for this install exists. -->
   <PropertyGroup Condition="'$(Spt)' == '5'">
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Version>2.0.0</Version>
     <DefineConstants>$(DefineConstants);SPT5</DefineConstants>
     <DefineConstants Condition="Exists('$(FikaCore)')">$(DefineConstants);FIKA</DefineConstants>

@@ -159,8 +159,19 @@ namespace BotCensus
             }
 
             if (_font == null)
-                _font = Font.CreateDynamicFontFromOSFont(
-                    new[] { "Bahnschrift", "Bahnschrift SemiBold", "DIN", "Oswald" }, 16);
+            {
+                // On the IL2CPP client this is a rebuilt stub rather than a native method, so it may not
+                // answer. Unity's default font is a fine last resort; a throw here would cost the frame.
+                try
+                {
+                    _font = Font.CreateDynamicFontFromOSFont(
+                        new[] { "Bahnschrift", "Bahnschrift SemiBold", "DIN", "Oswald" }, 16);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[Bot Census] OS font fallback unavailable: " + ex.Message);
+                }
+            }
 
             Debug.Log("[Bot Census] overlay font: " + (_font != null ? _font.name : "Unity default"));
             return _font;
