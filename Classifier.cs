@@ -21,6 +21,10 @@ namespace BotCensus
             // 37 crazyAssaultEvent that BotCounter wrongly counted as a boss.
             { 0, Bucket.Scav }, { 1, Bucket.Scav }, { 10, Bucket.Scav }, { 19, Bucket.Scav }, { 37, Bucket.Scav },
 
+            // AI PMCs by role. Census.Classify catches them by side first, but SPT 5.0 hands its PMC bots
+            // a Savage side, so the role is what keeps them off the Other row there.
+            { 51, Bucket.Pmc }, { 52, Bucket.Pmc },
+
             // 9 pmcBot is the Reserve/Labs Raider.
             { 9, Bucket.Raider },
 

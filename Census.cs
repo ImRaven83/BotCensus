@@ -317,7 +317,8 @@ namespace BotCensus
                 return;
             }
 
-            // (B) AI PMCs (pmcUSEC / pmcBEAR) are only distinguishable by side, not role.
+            // (B) AI PMCs (pmcUSEC / pmcBEAR) by side. SPT 5.0 spawns them Savage-side, so the vanilla map
+            //     below also catches them by role.
             EPlayerSide side = profile.Side;
             if (side == EPlayerSide.Usec || side == EPlayerSide.Bear)
             {
@@ -326,8 +327,16 @@ namespace BotCensus
             }
 
             // (C) Explicit vanilla map, with a loud "Other" catch-all so nothing is invisible.
-            _counts[(int)Classifier.Vanilla(role)]++;
+            Bucket bucket = Classifier.Vanilla(role);
+            _counts[(int)bucket]++;
+
+            // Say once per role what ended up there, so an unrecognised role can be named from the log
+            // rather than guessed at from a count.
+            if (bucket == Bucket.Other && _loggedOther.Add(r))
+                Logger.LogInfo("[Bot Census] counting as Other: " + role + " (" + r + "), side " + side);
         }
+
+        readonly HashSet<int> _loggedOther = new HashSet<int>();
 
         void Bump(string faction, bool escort)
         {
