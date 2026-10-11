@@ -83,7 +83,9 @@ namespace BotCensus
             // Mipmapped: a 64px glyph is drawn at whatever the font size is (10-30), and point-sampling
             // that down crawls. Trilinear off the mip chain keeps it steady.
             var texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
-            if (!texture.LoadImage(png))
+            // Called through the class rather than as an extension: IL2CPP interop keeps the static
+            // but not always the extension attribute, and this form compiles on both.
+            if (!ImageConversion.LoadImage(texture, png))
             {
                 Object.Destroy(texture);
                 return null;

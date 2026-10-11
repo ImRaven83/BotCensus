@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using BepInEx.Bootstrap;
 using EFT;
 using UnityEngine;
 
@@ -37,7 +36,7 @@ namespace BotCensus
         static void Resolve()
         {
             _resolved = true;
-            if (!Chainloader.PluginInfos.ContainsKey(PluginId)) return;
+            if (!Loader.HasPlugin(PluginId)) return;
 
             Type manager = FindType("MoreBotsAPI.Components.FactionManager");
             if (manager == null) return;
@@ -89,7 +88,7 @@ namespace BotCensus
         static void ResolveRegistry()
         {
             _registryResolved = true;
-            if (!Chainloader.PluginInfos.ContainsKey(PluginId)) return;
+            if (!Loader.HasPlugin(PluginId)) return;
 
             Type manager = FindType("MoreBotsAPI.CustomWildSpawnTypeManager");
             Type custom = FindType("MoreBotsAPI.CustomWildSpawnType");

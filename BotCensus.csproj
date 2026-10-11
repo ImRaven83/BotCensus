@@ -1,21 +1,41 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- Which SPT to build for. 4 (default) is SPT 4.1: BepInEx 5 on the Mono client. 5 is SPT 5.0: BepInEx 6
+       on the IL2CPP client, built with `dotnet build -c Release -p:Spt=5`. One source tree serves both;
+       the differences sit behind `#if SPT5`. -->
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <Spt Condition="'$(Spt)' == ''">4</Spt>
     <LangVersion>latest</LangVersion>
     <AssemblyName>BotCensus</AssemblyName>
     <RootNamespace>BotCensus</RootNamespace>
-    <Version>1.4.0</Version>
     <Nullable>disable</Nullable>
     <DebugType>none</DebugType>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <!-- Repo sits three levels under the SPT root; keeps HintPaths portable across installs. -->
     <SptRoot>$(MSBuildProjectDirectory)\..\..\..</SptRoot>
     <Managed>$(SptRoot)\EscapeFromTarkov_Data\Managed</Managed>
+    <!-- BepInEx 6 generates the IL2CPP interop assemblies here on first launch. -->
+    <Interop>$(SptRoot)\BepInEx\interop</Interop>
+    <FikaCore>$(SptRoot)\BepInEx\plugins\Fika\Fika.Core.dll</FikaCore>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Spt)' != '5'">
+    <TargetFramework>net472</TargetFramework>
+    <Version>1.4.0</Version>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DefineConstants>$(DefineConstants);FIKA</DefineConstants>
+  </PropertyGroup>
+
+  <!-- BepInEx 6 IL2CPP runs plugins on CoreCLR. Output keeps its framework folder so a 5.0 build never
+       overwrites a 4.1 one. Fika support compiles in only if a Fika.Core.dll for this install exists. -->
+  <PropertyGroup Condition="'$(Spt)' == '5'">
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>2.0.0</Version>
+    <DefineConstants>$(DefineConstants);SPT5</DefineConstants>
+    <DefineConstants Condition="Exists('$(FikaCore)')">$(DefineConstants);FIKA</DefineConstants>
   </PropertyGroup>
 
   <!-- Lets `dotnet build` target net472 without a separate targeting pack installed. -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(Spt)' != '5'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
@@ -25,7 +45,7 @@
     <EmbeddedResource Include="Icons\*.png" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Spt)' != '5'">
     <Reference Include="BepInEx">
       <HintPath>$(SptRoot)\BepInEx\core\BepInEx.dll</HintPath>
       <Private>false</Private>
@@ -61,7 +81,7 @@
       <Private>false</Private>
     </Reference>
     <Reference Include="Fika.Core">
-      <HintPath>$(SptRoot)\BepInEx\plugins\Fika\Fika.Core.dll</HintPath>
+      <HintPath>$(FikaCore)</HintPath>
       <Private>false</Private>
     </Reference>
     <!-- Transitive deps the compiler needs to resolve FikaPlayer's type hierarchy. -->
@@ -75,6 +95,67 @@
     </Reference>
     <Reference Include="Comfort.Unity">
       <HintPath>$(Managed)\Comfort.Unity.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- SPT 5.0. The game-side references are BepInEx 6's generated interop assemblies, not the game's
+       own Managed folder (an IL2CPP build has none worth referencing). -->
+  <ItemGroup Condition="'$(Spt)' == '5'">
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(SptRoot)\BepInEx\core\BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(SptRoot)\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(SptRoot)\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(Interop)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(Interop)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>$(Interop)\Comfort.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Comfort.Unity">
+      <HintPath>$(Interop)\Comfort.Unity.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(Interop)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(Interop)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(Interop)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(Interop)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(Interop)\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(Interop)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Fika.Core" Condition="Exists('$(FikaCore)')">
+      <HintPath>$(FikaCore)</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

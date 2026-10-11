@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if SPT5
+using Il2CppInterop.Runtime;
+#endif
 
 namespace BotCensus
 {
@@ -138,8 +141,15 @@ namespace BotCensus
             if (_font != null || _fontSearched) return _font;
             _fontSearched = true;
 
+#if SPT5
+            // The generic overload is managed-side sugar that IL2CPP builds tend to strip; ask by type.
+            foreach (var found in Resources.FindObjectsOfTypeAll(Il2CppType.Of<Font>()))
+            {
+                Font f = found != null ? found.TryCast<Font>() : null;
+#else
             foreach (Font f in Resources.FindObjectsOfTypeAll<Font>())
             {
+#endif
                 if (f == null || string.IsNullOrEmpty(f.name)) continue;
                 if (f.name.IndexOf("Bender", StringComparison.OrdinalIgnoreCase) >= 0)
                 {

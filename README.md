@@ -39,7 +39,8 @@ screen, so it settles alongside the rest of the HUD instead of popping over it.
 
 ## Install
 
-Put the `BotCensus` folder in `BepInEx/plugins` and launch. Nothing to configure to get going.
+Put the `BotCensus` folder in `BepInEx/plugins` and launch. Built for SPT 4.1; see
+[SPT versions](#spt-versions) for 5.0. Nothing to configure to get going.
 **MoreBotsAPI** (custom-faction names) and **Fika** (co-op) are optional; each is used automatically
 when it's installed and ignored when it isn't.
 
@@ -90,8 +91,38 @@ apart from your own.
 It draws in the top-right. If you've already got a counter living there, run one or the other, or bump
 **Offset Top** here so the two don't overlap.
 
+## SPT versions
+
+| SPT | Client | Loader | Status |
+|---|---|---|---|
+| 4.1 | Mono | BepInEx 5 | Supported. The default build |
+| 5.0 | IL2CPP | BepInEx 6 | **Draft port, not yet built or tested in game** |
+
+SPT 5.0 moves to the IL2CPP Tarkov client. BepInEx 5 can't load anything there, so the 5.0 build is a
+BepInEx 6 IL2CPP plugin made from the same source; the differences sit behind `#if SPT5`. It was
+written before 5.0's modding setup was public, so expect to fix a few things against the real interop
+assemblies the first time it's built. The parts most likely to need attention:
+
+- **Game type names.** SPT remaps Tarkov's obfuscated names. The draft assumes 5.0 keeps the 4.1 names it
+  uses (`GameWorld`, `HideoutGameWorld`, `Player`, `WildSpawnType`, `CurrentScreenSingletonClass`,
+  `EEftScreenType`) in the same namespaces.
+- **IMGUI.** The panel is drawn with `OnGUI`. IL2CPP builds sometimes strip IMGUI or
+  `ImageConversion.LoadImage`; if either is missing the panel (or its glyphs) won't draw, and that part
+  needs a rewrite onto uGUI.
+- **Custom factions.** MoreBotsAPI is still read by reflection, and with no 5.0 MoreBotsAPI the panel
+  falls back to its known ID ranges. Whether factions can still register roles above the vanilla range
+  on an IL2CPP client is up to that mod.
+- **Fika.** The Fika integration only compiles in when the build finds a `Fika.Core.dll` for the
+  install. Without one the 5.0 build counts locally, which still sees every bot.
+- **Toggle Key** is a single key on 5.0, with no modifiers.
+
 ## Build
 
 `dotnet build -c Release`, with the .NET SDK 8+ installed. Path resolution keys off `SptRoot` in the
 csproj; by default it walks three folders up to the SPT install, so override that if your checkout lives
 elsewhere. The build drops `BotCensus.dll` into `BepInEx/plugins/BotCensus`.
+
+For SPT 5.0 add `-p:Spt=5` (or `.\build.ps1 -Spt 5`), pointing `SptRoot` at the 5.0 install. Launch the
+game once with BepInEx 6 first: the build references the interop assemblies it generates in
+`BepInEx/interop`. The output targets `net6.0` and lands in `bin/Release/net6.0`, so it never overwrites
+a 4.1 build.
